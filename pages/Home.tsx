@@ -1,3 +1,6 @@
+import BoyAvatar from '../img/avatar/Boy.jpg';
+import GirlAvatar from '../img/avatar/Girl.jpg';
+import DefaultBg from '../img/bg/bg.jpg';
 
 import React, { useEffect, useState, useRef } from 'react';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
@@ -13,6 +16,7 @@ const Home: React.FC = () => {
   const [days, setDays] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     // Sync Settings
@@ -65,16 +69,31 @@ const Home: React.FC = () => {
       </div>
     );
   }
-
+  const handleImgError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
+    fallback: string
+  ) => {
+    const target = e.currentTarget;
+    if (target.src !== fallback) {
+      target.src = fallback;
+    }
+  };
+  
+  const safeImage = (url?: string) => {
+    if (!url) return DefaultBg;
+    if (url.includes('photos.app.goo.gl')) return DefaultBg;
+    return url;
+  };
   return (
     <div className="max-w-4xl mx-auto px-6">
       {/* Background Image Layer */}
-      {settings.bgImage && (
-        <div 
-          className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 opacity-20"
-          style={{ backgroundImage: `url(${settings.bgImage})` }}
-        />
-      )}
+      <div
+  className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 opacity-20"
+  style={{
+    backgroundImage: `url(${settings.bgImage || DefaultBg})`
+  }}
+/>
+
 
       {/* Music Player */}
       {settings.bgMusic && (
@@ -99,8 +118,15 @@ const Home: React.FC = () => {
           className="flex justify-center items-center gap-4 sm:gap-12"
         >
           <div className="relative">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-xl overflow-hidden">
-              <img src={settings.avatar1 || 'https://picsum.photos/200/200?1'} alt="Avatar 1" className="w-full h-full object-cover" />
+          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-xl overflow-hidden">
+            <img
+  src={settings.avatar1 || BoyAvatar}
+  alt="Avatar 1"
+  className="w-full h-full object-cover cursor-pointer"
+  onClick={() => setPreviewImage(BoyAvatar)}
+  onError={(e) => handleImgError(e, BoyAvatar)}
+/>
+
             </div>
             <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-md">
               <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
@@ -116,8 +142,15 @@ const Home: React.FC = () => {
           </motion.div>
 
           <div className="relative">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-xl overflow-hidden">
-              <img src={settings.avatar2 || 'https://picsum.photos/200/200?2'} alt="Avatar 2" className="w-full h-full object-cover" />
+          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-xl overflow-hidden">
+            <img
+  src={settings.avatar2 || GirlAvatar}
+  alt="Avatar 2"
+  className="w-full h-full object-cover cursor-pointer"
+  onClick={() => setPreviewImage(GirlAvatar)}
+  onError={(e) => handleImgError(e, GirlAvatar)}
+/>
+
             </div>
             <div className="absolute -bottom-2 -left-2 bg-white rounded-full p-2 shadow-md">
               <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
@@ -160,11 +193,13 @@ const Home: React.FC = () => {
                 className="bg-white/80 backdrop-blur-sm p-4 rounded-3xl shadow-lg border border-rose-50 hover:shadow-xl transition-all duration-300 group"
               >
                 <div className="relative aspect-video rounded-2xl overflow-hidden mb-4">
-                  <img 
-                    src={memory.imageUrl || `https://picsum.photos/600/400?sig=${memory.id}`} 
-                    alt={memory.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                <img
+  src={memory.imageUrl || DefaultBg}
+  alt={memory.title}
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+  onError={(e) => handleImgError(e, DefaultBg)}
+/>
+
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-rose-500 flex items-center shadow-sm">
                     <Calendar className="w-3 h-3 mr-1" />
                     {memory.createdAt ? format(memory.createdAt.toDate(), 'MMM dd, yyyy') : 'Just now'}
@@ -180,6 +215,29 @@ const Home: React.FC = () => {
               <p className="text-rose-300 font-light italic">No memories captured yet. Time to make some!</p>
             </div>
           )}
+          <AnimatePresence>
+  {previewImage && (
+    <motion.div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={() => setPreviewImage(null)}
+    >
+      <motion.img
+        src={previewImage}
+        alt="Preview"
+        initial={{ scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.7, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        className="max-w-[90vw] max-h-[90vh] rounded-3xl shadow-2xl border-4 border-white"
+        onClick={(e) => e.stopPropagation()} // ❗ tránh click ảnh bị đóng
+      />
+    </motion.div>
+  )}
+</AnimatePresence>
+
         </div>
       </section>
     </div>

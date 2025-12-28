@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth, isConfigured } from '../services/firebase';
+import { auth } from '../services/firebase';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Lock, Mail, AlertCircle } from 'lucide-react';
 
@@ -14,10 +14,6 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isConfigured) {
-      setError("Firebase is not configured. Please check services/firebase.ts");
-      return;
-    }
     setLoading(true);
     setError('');
     try {
@@ -87,14 +83,7 @@ const Login: React.FC = () => {
             {loading ? 'Authenticating...' : 'Enter Sanctuary'}
           </button>
         </form>
-
-        {!isConfigured && (
-          <div className="mt-8 text-center bg-orange-50 p-4 rounded-2xl border border-orange-100">
-             <p className="text-xs text-orange-600 font-medium">
-               🚀 Developers: Open <code>services/firebase.ts</code> to configure your API keys.
-             </p>
-          </div>
-        )}
+       
       </div>
     </div>
   );
